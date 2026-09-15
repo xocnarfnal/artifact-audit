@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "artifact-audit"
-version = "0.2.0"
-description = "Deterministic artifact sealing, handoff verification, and drift detection."
+version = "0.2.1"
+description = "Seal artifact bundles and detect modified, missing, or added files after workflow handoffs."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
@@ -17,6 +17,8 @@ keywords = [
     "cli",
     "artifact-sealing",
     "drift-detection",
+    "github-actions",
+    "ci",
 ]
 
 classifiers = [
