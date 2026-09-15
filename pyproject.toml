@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "artifact-audit"
+version = "0.1.0"
+description = "Deterministic SHA-256 artifact manifest generation and verification."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+keywords = [
+    "artifact-integrity",
+    "audit",
+    "sha256",
+    "reproducibility",
+    "cli",
+]
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Quality Assurance",
+]
+
+dependencies = []
+
+[project.scripts]
+artifact-audit = "artifact_audit:main"
+
+[project.urls]
+Homepage = "https://github.com/xocnarfnal/artifact-audit"
+Repository = "https://github.com/xocnarfnal/artifact-audit"
+Issues = "https://github.com/xocnarfnal/artifact-audit/issues"
+
+[tool.setuptools]
+py-modules = ["artifact_audit"]
