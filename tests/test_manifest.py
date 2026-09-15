@@ -1,9 +1,15 @@
 import hashlib
+import subprocess
+import sys
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from artifact_audit import generate_manifest, write_manifest
+from artifact_audit import (
+    generate_manifest,
+    verify_manifest,
+    write_manifest,
+)
 
 
 class TestManifestGeneration(unittest.TestCase):
@@ -59,6 +65,104 @@ class TestManifestGeneration(unittest.TestCase):
             paths = [item["path"] for item in manifest["files"]]
 
             self.assertNotIn("artifact-manifest.json", paths)
+
+
+class TestManifestVerification(unittest.TestCase):
+    def create_manifest(self, root: Path) -> Path:
+        output = root / "artifact-manifest.json"
+        manifest = generate_manifest(root, output)
+        write_manifest(manifest, output)
+        return output
+
+    def test_verification_passes_when_files_match(self):
+        with TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+
+            (root / "data.txt").write_text("original", encoding="utf-8")
+            output = self.create_manifest(root)
+
+            result = verify_manifest(root, output)
+
+            self.assertTrue(result["valid"])
+            self.assertEqual(result["missing"], [])
+            self.assertEqual(result["modified"], [])
+            self.assertEqual(result["unexpected"], [])
+
+    def test_verification_detects_modified_file(self):
+        with TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+
+            file_path = root / "data.txt"
+            file_path.write_text("original", encoding="utf-8")
+
+            output = self.create_manifest(root)
+
+            file_path.write_text("changed", encoding="utf-8")
+
+            result = verify_manifest(root, output)
+
+            self.assertFalse(result["valid"])
+            self.assertEqual(result["modified"], ["data.txt"])
+
+    def test_verification_detects_missing_file(self):
+        with TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+
+            file_path = root / "data.txt"
+            file_path.write_text("original", encoding="utf-8")
+
+            output = self.create_manifest(root)
+
+            file_path.unlink()
+
+            result = verify_manifest(root, output)
+
+            self.assertFalse(result["valid"])
+            self.assertEqual(result["missing"], ["data.txt"])
+
+    def test_verification_detects_unexpected_file(self):
+        with TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+
+            (root / "data.txt").write_text("original", encoding="utf-8")
+
+            output = self.create_manifest(root)
+
+            (root / "extra.txt").write_text("unexpected", encoding="utf-8")
+
+            result = verify_manifest(root, output)
+
+            self.assertFalse(result["valid"])
+            self.assertEqual(result["unexpected"], ["extra.txt"])
+
+    def test_cli_returns_exit_code_one_on_failure(self):
+        with TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+
+            file_path = root / "data.txt"
+            file_path.write_text("original", encoding="utf-8")
+
+            output = self.create_manifest(root)
+
+            file_path.write_text("changed", encoding="utf-8")
+
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "artifact_audit",
+                    "verify",
+                    str(root),
+                    "--manifest",
+                    str(output),
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(completed.returncode, 1)
+            self.assertIn("Verification failed.", completed.stdout)
 
 
 if __name__ == "__main__":
