@@ -1,0 +1,45 @@
+# Copy to .github/workflows/verify-handoff.yml in a repository to run it manually.
+# This example uses synthetic files only; replace the producer step with your own build.
+name: Verify an artifact handoff
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  seal:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Produce and seal synthetic output
+        shell: bash
+        run: |
+          mkdir -p handoff/bundle
+          printf 'synthetic build output\n' > handoff/bundle/result.txt
+          python -m pip install artifact-audit==0.2.0
+          artifact-audit seal handoff/bundle --output handoff/seal.json
+      - name: Upload bundle and seal together
+        uses: actions/upload-artifact@v4
+        with:
+          name: sealed-handoff
+          path: handoff/
+
+  verify:
+    needs: seal
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download sealed handoff
+        uses: actions/download-artifact@v4
+        with:
+          name: sealed-handoff
+          path: handoff/
+      - name: Verify with Artifact Audit
+        uses: xocnarfnal/artifact-audit@v0.2.0
+        with:
+          path: handoff/bundle
+          manifest: handoff/seal.json

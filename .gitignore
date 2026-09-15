@@ -6,3 +6,4 @@ build/
 dist/
 .ci-smoke/
 .wheel-smoke/
+work/
