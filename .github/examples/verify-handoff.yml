@@ -39,7 +39,7 @@ jobs:
           name: sealed-handoff
           path: handoff/
       - name: Verify with Artifact Audit
-        uses: xocnarfnal/artifact-audit@v0.2.0
+        uses: xocnarfnal/artifact-audit@v0.2.1
         with:
           path: handoff/bundle
           manifest: handoff/seal.json
