@@ -1,0 +1,30 @@
+name: Artifact Audit verification
+description: Verify a directory against an Artifact Audit manifest without uploading its files.
+inputs:
+  path:
+    description: Directory to verify.
+    required: true
+  manifest:
+    description: Manifest file to verify against.
+    required: true
+  path-key-env:
+    description: Name of the environment variable containing the redacted-path key, if needed.
+    required: false
+    default: ARTIFACT_AUDIT_PATH_KEY
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v7
+      with:
+        python-version: "3.12"
+    - name: Install Artifact Audit
+      shell: bash
+      run: python -m pip install "$GITHUB_ACTION_PATH"
+    - name: Verify artifacts
+      shell: bash
+      env:
+        AUDIT_PATH: ${{ inputs.path }}
+        AUDIT_MANIFEST: ${{ inputs.manifest }}
+        AUDIT_KEY_ENV: ${{ inputs.path-key-env }}
+      run: artifact-audit verify "$AUDIT_PATH" --manifest "$AUDIT_MANIFEST" --path-key-env "$AUDIT_KEY_ENV" --json
