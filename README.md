@@ -74,7 +74,7 @@ Another repository can verify an artifact directory using the root composite act
 ~~~yaml
 steps:
   - uses: actions/checkout@v7
-  - uses: xocnarfnal/artifact-audit@v0.2.0
+  - uses: xocnarfnal/artifact-audit@v0.2.1
     with:
       path: ./output
       manifest: ./seal.json
@@ -83,7 +83,7 @@ steps:
 For a redacted seal, supply the key as a step environment variable from a repository secret:
 
 ~~~yaml
-  - uses: xocnarfnal/artifact-audit@v0.2.0
+  - uses: xocnarfnal/artifact-audit@v0.2.1
     with:
       path: ./output
       manifest: ./private-seal.json
