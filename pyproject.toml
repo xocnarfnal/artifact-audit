@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "artifact-audit"
-version = "0.1.1"
-description = "Deterministic SHA-256 artifact manifest generation and verification."
+version = "0.2.0"
+description = "Deterministic artifact sealing, handoff verification, and drift detection."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
@@ -15,6 +15,8 @@ keywords = [
     "sha256",
     "reproducibility",
     "cli",
+    "artifact-sealing",
+    "drift-detection",
 ]
 
 classifiers = [
@@ -25,6 +27,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Quality Assurance",
 ]
 

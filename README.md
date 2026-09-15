@@ -2,131 +2,110 @@
 
 [![Tests](https://github.com/xocnarfnal/artifact-audit/actions/workflows/tests.yml/badge.svg)](https://github.com/xocnarfnal/artifact-audit/actions/workflows/tests.yml)
 
-Artifact Audit is a lightweight command-line tool for generating deterministic SHA-256 file manifests and verifying artifact integrity.
+Artifact Audit seals a folder of outputs into a deterministic manifest, verifies the outputs after a handoff, and compares two manifests to show artifact drift. It is a lightweight local CLI for automated, AI, CI, research, and review workflows. Unlike a plain checksum list, it records sizes and relative paths, checks for added or missing files, links a seal to a prior manifest, and produces stable JSON reports. It does not sign manifests or authenticate their authors.
 
-It is designed for automated workflows, review pipelines, reproducible research, and any process where unexpected file changes need to be detected reliably.
+Python 3.10–3.13 is supported. Install the package from [PyPI](https://pypi.org/project/artifact-audit/):
 
-## Features
-
-- Generate deterministic SHA-256 manifests
-- Record file paths, hashes, and sizes
-- Verify files against an existing manifest
-- Detect modified files
-- Detect missing files
-- Detect unexpected files
-- CI-friendly exit codes
-- Machine-readable JSON manifests
-- No runtime dependencies
-
-## Requirements
-
-Python 3.10 or newer.
-
-## Installation
-
-Install directly from PyPI:
-
-```bash
-pip install artifact-audit
-```
-
-Confirm the CLI is available:
-
-```bash
+~~~sh
+python -m pip install artifact-audit
 artifact-audit --help
-```
+~~~
 
-## Generate a Manifest
+## Quick start
 
-Generate a manifest for a directory:
+Create a v2 seal for a synthetic output bundle, then verify it after handoff:
 
-```bash
-artifact-audit generate ./data
-```
+~~~sh
+artifact-audit seal ./output --output seal.json --producer build-step
+artifact-audit verify ./output --manifest seal.json
+~~~
 
-By default, the manifest is written to:
+The seal is canonical UTF-8 JSON: sorted keys, compact separators, one final newline, and file records sorted by identifier. With unchanged files, options, and tool version, repeat runs produce identical bytes. It contains no automatic timestamp, hostname, username, or absolute path. When the seal is inside the folder, that output file is excluded from the bundle. The producer value is optional and supplied by you.
 
-```text
-artifact-manifest.json
-```
+Link the next stage to a previous manifest without storing its local path:
 
-Specify another output path:
+~~~sh
+artifact-audit seal ./review-output --output review-seal.json --parent seal.json
+artifact-audit verify ./review-output --manifest review-seal.json --parent seal.json
+~~~
 
-```bash
-artifact-audit generate ./data --output my-manifest.json
-```
+The child records a SHA-256 digest of the validated, canonical parent manifest. Verification reports a missing or mismatched parent. If a supplied parent manifest has a broken payload digest, it is invalid input. Parent links and self-digests detect accidental changes; they are not authentication against someone who can replace and recompute manifests.
 
-Example manifest:
+Compare handoffs, including added, removed, and modified artifacts:
 
-```json
-{
-  "algorithm": "sha256",
-  "files": [
-    {
-      "path": "example.txt",
-      "sha256": "a1b2c3...",
-      "size": 128
-    }
-  ],
-  "manifest_version": 1
-}
-```
+~~~sh
+artifact-audit diff seal.json review-seal.json
+artifact-audit diff seal.json review-seal.json --json
+artifact-audit verify ./output --manifest seal.json --json
+~~~
 
-## Verify Artifacts
+Diff compares file identifiers, SHA-256 hashes, sizes, optional producer, and parent link. It treats v1 and ordinary v2 path records as comparable; a schema/tool-version change alone is not artifact drift. Redacted and ordinary manifests cannot be compared, and two redacted manifests must use the same path key. JSON reports have stable field names and deterministic ordering. Verification reports valid, missing, modified, unexpected, parent_status, manifest_version, and path_mode. Diff reports equivalent, added, removed, modified, unchanged_count, metadata_changed, and path_mode. An input error emits a JSON object with error and valid=false when --json is selected.
 
-Verify a directory against a manifest:
+## Private path identifiers
 
-```bash
-artifact-audit verify ./data --manifest artifact-manifest.json
-```
+Ordinary manifests expose relative filenames, sizes, and content hashes. Filenames and hashes can be sensitive metadata. Redacted mode replaces each normalized relative path with an HMAC-SHA256 path identifier. Keep a high-entropy secret in an environment variable; do not put it in a command argument, manifest, or repository. Use the same key to verify and compare redacted seals.
 
-If every artifact matches:
+~~~sh
+# Supply ARTIFACT_AUDIT_PATH_KEY through your shell or secret manager first.
+artifact-audit seal ./private-output --output private-seal.json --redact-paths
+artifact-audit verify ./private-output --manifest private-seal.json --json
+~~~
 
-```text
-Verification passed: all artifacts match the manifest.
-```
+The default variable name is ARTIFACT_AUDIT_PATH_KEY. Use --path-key-env NAME on seal or verify if your workflow uses another variable. The key must be at least 16 UTF-8 bytes; a random 32-byte or stronger value is recommended. The manifest includes a deterministic HMAC key check so a wrong key fails safely even for an empty folder. That check also lets an attacker test guesses offline if the key is weak. Redaction hides raw paths, not file sizes, content hashes, producer labels, or the existence and count of files. SHA-256 hashes are not encryption. Read [SECURITY.md](SECURITY.md) before sharing manifests.
 
-If something changed:
+## GitHub Action
 
-```text
-Verification failed.
-Modified:
-  - example.txt
-```
+After the v0.2.0 tag is published, another repository can verify an artifact directory using the root composite action:
 
-Artifact Audit separately identifies missing, modified, and unexpected files.
+~~~yaml
+steps:
+  - uses: actions/checkout@v7
+  - uses: xocnarfnal/artifact-audit@v0.2.0
+    with:
+      path: ./output
+      manifest: ./seal.json
+~~~
 
-## Exit Codes
+For a redacted seal, supply the key as a step environment variable from a repository secret:
 
-| Exit code | Meaning |
+~~~yaml
+  - uses: xocnarfnal/artifact-audit@v0.2.0
+    with:
+      path: ./output
+      manifest: ./private-seal.json
+    env:
+      ARTIFACT_AUDIT_PATH_KEY: ${{ secrets.ARTIFACT_AUDIT_PATH_KEY }}
+~~~
+
+The action installs Artifact Audit from its tagged source and runs verify with JSON output. It needs only the directory and manifest; it does not send artifact files to Artifact Audit or a remote service. Pip installation itself contacts package infrastructure for build requirements. Never publish a sensitive manifest blindly.
+
+## Compatibility and exit codes
+
+The 0.1.x commands remain available:
+
+~~~sh
+artifact-audit generate ./output --output legacy.json
+artifact-audit verify ./output --manifest legacy.json
+~~~
+
+Generate continues writing the v1 shape and its existing pretty JSON output. Verify accepts both v1 and v2; seal writes v2. V1 manifests have no parent link, privacy mode, or payload digest. V1 backslash paths are normalized for Windows/POSIX comparison. New v2 paths use forward slashes.
+
+| Code | Meaning |
 | --- | --- |
-| `0` | Verification passed |
-| `1` | Verification failed |
+| 0 | Verification passed, or diff found equivalent artifacts and handoff metadata. |
+| 1 | File drift or a missing/mismatched parent; diff found file or handoff metadata drift. |
+| 2 | Missing/malformed input, invalid payload or parent, missing/wrong privacy key, incompatible diff modes, or file operation error. |
 
-This makes Artifact Audit suitable for CI pipelines and automated review workflows.
-
-## Deterministic Output
-
-Artifact Audit intentionally excludes timestamps and sorts file paths before generating a manifest.
-
-For unchanged input files, repeated manifest generation produces identical output.
+Ordinary local generate, seal, verify, and diff operations make no network transmission. The program rejects symbolic links to avoid reading through them. Manifests are plain local files; keep them under the same access controls as the artifacts they describe.
 
 ## Development
 
-Run the test suite with:
+Run synthetic tests with:
 
-```bash
+~~~sh
 python -m unittest discover -s tests -v
-```
+~~~
 
-Tests also run automatically through GitHub Actions on every push and pull request to `main`.
+CI covers Python 3.10, 3.11, 3.12, and 3.13 on Ubuntu, plus 3.12 on Windows. It also builds distributions, checks package metadata, and smoke-tests the reusable action. See [CONTRIBUTING.md](CONTRIBUTING.md) and [CHANGELOG.md](CHANGELOG.md).
 
-## Project Status
-
-Alpha.
-
-The core manifest generation and verification workflow is implemented and tested.
-
-## License
-
-MIT License.
+Artifact Audit is released under the [MIT license](LICENSE).
