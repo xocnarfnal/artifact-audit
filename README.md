@@ -24,35 +24,41 @@ Python 3.10 or newer.
 
 ## Installation
 
-Clone the repository:
+Install directly from PyPI:
 
 ```bash
-git clone https://github.com/xocnarfnal/artifact-audit.git
-cd artifact-audit
-
-Install the package:
-
-python -m pip install .
+pip install artifact-audit
+```
 
 Confirm the CLI is available:
 
+```bash
 artifact-audit --help
-Generate a Manifest
+```
+
+## Generate a Manifest
 
 Generate a manifest for a directory:
 
+```bash
 artifact-audit generate ./data
+```
 
 By default, the manifest is written to:
 
+```text
 artifact-manifest.json
+```
 
 Specify another output path:
 
+```bash
 artifact-audit generate ./data --output my-manifest.json
+```
 
 Example manifest:
 
+```json
 {
   "algorithm": "sha256",
   "files": [
@@ -64,62 +70,63 @@ Example manifest:
   ],
   "manifest_version": 1
 }
-Verify Artifacts
+```
+
+## Verify Artifacts
 
 Verify a directory against a manifest:
 
+```bash
 artifact-audit verify ./data --manifest artifact-manifest.json
+```
 
 If every artifact matches:
 
+```text
 Verification passed: all artifacts match the manifest.
+```
 
-If something changed, Artifact Audit reports the affected files:
+If something changed:
 
+```text
 Verification failed.
 Modified:
   - example.txt
+```
 
-It separately identifies:
+Artifact Audit separately identifies missing, modified, and unexpected files.
 
-missing files
-modified files
-unexpected files
-Exit Codes
-Exit code	Meaning
-0	Verification passed
-1	Verification failed
+## Exit Codes
+
+| Exit code | Meaning |
+| --- | --- |
+| `0` | Verification passed |
+| `1` | Verification failed |
 
 This makes Artifact Audit suitable for CI pipelines and automated review workflows.
 
-Deterministic Output
+## Deterministic Output
 
 Artifact Audit intentionally excludes timestamps and sorts file paths before generating a manifest.
 
 For unchanged input files, repeated manifest generation produces identical output.
 
-Development
+## Development
 
 Run the test suite with:
 
+```bash
 python -m unittest discover -s tests -v
+```
 
-Tests also run automatically through GitHub Actions on every push and pull request to main.
+Tests also run automatically through GitHub Actions on every push and pull request to `main`.
 
-Project Status
+## Project Status
 
 Alpha.
 
-The core manifest generation and verification workflow is implemented and tested. Additional reporting and packaging improvements are planned.
+The core manifest generation and verification workflow is implemented and tested.
 
-License
+## License
 
 MIT License.
-
-
-### Commit
-
-Commit message：
-
-```text
-Document installation and usage
