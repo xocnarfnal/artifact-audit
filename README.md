@@ -2,6 +2,7 @@
 
 [![Tests](https://github.com/xocnarfnal/artifact-audit/actions/workflows/tests.yml/badge.svg)](https://github.com/xocnarfnal/artifact-audit/actions/workflows/tests.yml)
 [![PyPI](https://img.shields.io/pypi/v/artifact-audit)](https://pypi.org/project/artifact-audit/)
+[GitHub Marketplace Action](https://github.com/marketplace/actions/artifact-audit)
 
 Seal a folder, hand it to another workflow or reviewer, and independently detect modified, missing, and unexpected artifacts. Artifact Audit is a local Python CLI and GitHub Action for deterministic bundle manifests, handoff verification, and drift reports. Optional privacy-aware path identifiers avoid exposing raw filenames in a seal; sizes and content hashes remain visible. It does not sign manifests or authenticate their authors.
 
