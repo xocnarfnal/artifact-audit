@@ -1,5 +1,5 @@
-name: Artifact Audit verification
-description: Verify a directory against an Artifact Audit manifest without uploading its files.
+name: Artifact Audit
+description: Verify sealed artifact bundles and detect drift after CI handoffs; supports redacted path identifiers.
 inputs:
   path:
     description: Directory to verify.
@@ -28,3 +28,6 @@ runs:
         AUDIT_MANIFEST: ${{ inputs.manifest }}
         AUDIT_KEY_ENV: ${{ inputs.path-key-env }}
       run: artifact-audit verify "$AUDIT_PATH" --manifest "$AUDIT_MANIFEST" --path-key-env "$AUDIT_KEY_ENV" --json
+branding:
+  icon: file-text
+  color: blue
