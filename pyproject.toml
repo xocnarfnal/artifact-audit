@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "artifact-audit"
-version = "0.2.1"
+version = "0.2.2"
 description = "Seal artifact bundles and detect modified, missing, or added files after workflow handoffs."
 readme = "README.md"
 requires-python = ">=3.10"

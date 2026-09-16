@@ -9,6 +9,7 @@ from tempfile import TemporaryDirectory
 
 from artifact_audit import (
     AuditError,
+    TOOL_VERSION,
     canonical_bytes,
     diff_manifests,
     generate_manifest,
@@ -28,6 +29,16 @@ def cli(*args, env=None):
 
 
 class TestV2Seal(unittest.TestCase):
+    def test_tool_version_matches_package_version(self):
+        pyproject = (Path(__file__).parent.parent / "pyproject.toml").read_text(
+            encoding="utf-8")
+        package_version = next(
+            line.split("=", 1)[1].strip().strip('"')
+            for line in pyproject.splitlines()
+            if line.startswith("version = ")
+        )
+        self.assertEqual(TOOL_VERSION, package_version)
+
     def test_canonical_bytes_and_repeatable_seal(self):
         with TemporaryDirectory() as temp:
             root = Path(temp) / "bundle"
@@ -45,7 +56,7 @@ class TestV2Seal(unittest.TestCase):
             self.assertEqual(first_bytes, canonical_bytes(first))
             self.assertEqual([item["path"] for item in first["files"]], ["a.txt", "b.txt"])
             self.assertEqual(first["manifest_version"], 2)
-            self.assertEqual(first["tool_version"], "0.2.0")
+            self.assertEqual(first["tool_version"], "0.2.2")
             self.assertNotIn("timestamp", first)
             self.assertNotIn("hostname", first)
             self.assertNotIn(str(root), first_bytes.decode("utf-8"))
