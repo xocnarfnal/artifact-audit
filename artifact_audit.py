@@ -11,7 +11,7 @@ from pathlib import Path
 
 DEFAULT_MANIFEST = "artifact-manifest.json"
 DEFAULT_KEY_ENV = "ARTIFACT_AUDIT_PATH_KEY"
-TOOL_VERSION = "0.2.0"
+TOOL_VERSION = "0.2.2"
 _HEX64 = re.compile(r"^[0-9a-f]{64}$")
 _ENV_NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 _KEY_CHECK_DOMAIN = b"artifact-audit:v2:path-key-check"

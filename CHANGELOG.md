@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.2
+
+- Correct the `tool_version` recorded in newly created v2 manifests so it matches the published package version.
+- Add a regression test that keeps the manifest tool version synchronized with package metadata.
+- No Action inputs or manifest format fields change in this patch release.
+
 ## 0.2.1
 
 - Clarify the root Action's Marketplace name, description, and branding without changing its inputs or behavior.

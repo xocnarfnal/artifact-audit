@@ -21,7 +21,7 @@ jobs:
         run: |
           mkdir -p handoff/bundle
           printf 'synthetic build output\n' > handoff/bundle/result.txt
-          python -m pip install artifact-audit==0.2.0
+          python -m pip install artifact-audit==0.2.2
           artifact-audit seal handoff/bundle --output handoff/seal.json
       - name: Upload bundle and seal together
         uses: actions/upload-artifact@v4
@@ -39,7 +39,7 @@ jobs:
           name: sealed-handoff
           path: handoff/
       - name: Verify with Artifact Audit
-        uses: xocnarfnal/artifact-audit@v0.2.1
+        uses: xocnarfnal/artifact-audit@v0.2.2
         with:
           path: handoff/bundle
           manifest: handoff/seal.json
